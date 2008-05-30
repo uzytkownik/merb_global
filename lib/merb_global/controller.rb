@@ -46,7 +46,7 @@ module Merb
     # @yield The block is called each time. It should return the customized
     #        language.
     # @return [String, Nil] Returns the language or nil
-    def self.language &block
+    def self.language(&block)
       self._language = block
     end
   end
