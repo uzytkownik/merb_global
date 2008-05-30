@@ -1,9 +1,12 @@
 class TranslationMigrationGenerator < Merb::GeneratorBase
+  protected :banner
+
   def initialize runtime_args, runtime_options = {}
-    runtime_args.push ""
+    runtime_args.push ''
     super
     @name = 'translations'
   end
+
   def mainfest
     record do |m|
       m.directory 'schema/migrations'
@@ -11,14 +14,13 @@ class TranslationMigrationGenerator < Merb::GeneratorBase
         File.basename(f) =~ /^(\d+)/
         $1
       end.max
-      filename = format "%03d_%s", (highest_migration.to_i+1), @name.snake_case
-      m.template "translation_migration.erb",
+      filename = format '%03d_%s', (highest_migration.to_i+1), @name.snake_case
+      m.template 'translation_migration.erb',
                  "schema/migrations/#{filename}.rb"
       puts banner
     end
   end
 
-  protected :banner
   def banner
     <<-EOS
 A migration to add translation tables to your database has been created.

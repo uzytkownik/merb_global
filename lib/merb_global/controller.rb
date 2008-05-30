@@ -4,15 +4,7 @@ module Merb
   class Controller 
     include Merb::Global
     class_inheritable_accessor :_language
-    ##
-    # Sets the language of block.
-    # 
-    # @yield The block is called each time. It should return the customized
-    #        language.
-    # @return [String, Nil] Returns the language or nil
-    def self.language &block
-      self._language = block
-    end
+
     before do
       # Set up the language
       accept_language = self.request.env['HTTP_ACCEPT_LANGUAGE']
@@ -21,7 +13,7 @@ module Merb
         begin
           unless accept_language.nil?
             accept_language = accept_language.split(',')
-            accept_language.collect! {|lang| lang.delete " " "\n" "\r" "\t"}
+            accept_language.collect! {|lang| lang.delete ' ' "\n" "\r" "\t"}
             accept_language.reject! {|lang| lang.empty?}
             accept_language.collect! {|lang| lang.split ';q='}
             accept_language.collect! do |lang|
@@ -45,7 +37,17 @@ module Merb
               end
             end
           end
-        end || "en"
+        end || 'en'
+    end
+
+    ##
+    # Sets the language of block.
+    # 
+    # @yield The block is called each time. It should return the customized
+    #        language.
+    # @return [String, Nil] Returns the language or nil
+    def self.language &block
+      self._language = block
     end
   end
 end

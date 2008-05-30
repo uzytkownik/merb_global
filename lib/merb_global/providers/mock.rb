@@ -5,14 +5,17 @@ module Merb
         def translate_to(singular, plural, opts)
           opts[:n] > 1 ? plural : singular
         end
+
         def support?(lang)
           true
         end
+
         def create!
           nil # It's mock after all ;)
         end
+
         def choose
-          "en"
+          'en'
         end
       end
     end
