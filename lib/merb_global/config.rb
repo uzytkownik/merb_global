@@ -1,19 +1,14 @@
 module Merb
   module Global
-    # call-seq:
-    #    config(key)                        => value
-    #    config([key1, key2, ...])          => value
-    #    config(key, default)               => value
-    #    config([key1, key2, ...], default) => value
+    ##
     #
     # Lookup the configuration
-    # ==== Params
-    # key<Symbol>:: A key
-    # keys<Array[Symbol]>:: Keys
-    # default<Object>:: A default value
     #
-    # ==== Returns
-    # value<Object>:: Object read from configuration or default
+    # @param [Symbol] key A key
+    # @param [Array<Symbol>] keys Keys
+    # @param default A default value
+    #
+    # @return Object read from configuration or default
     #
     # ==== Examples
     # <tt>Merb::Global.config [:gettext, :domain], 'merbapp'</tt>

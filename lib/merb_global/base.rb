@@ -12,22 +12,15 @@ module Merb
     def provider #:nodoc:
       @provider ||= Merb::Global::Providers.provider
     end
-    # call-seq:
-    #   _(singular, opts)          => translated
-    #   _(singlular, plural, opts) => translated
+    ##
     #
-    # Translate a string.
-    # ==== Parameters
-    # singular<String>:: A string to translate
-    # plural<String>:: A plural form of string
-    # opts<Hash>:: An options hash (see below)
-    #
-    # ==== Options (opts)
-    # :lang<String>:: A language to translate on
-    # :n<Fixnum>:: A number of objects
-    #
-    # ==== Returns
-    # translated<String>:: A translated string
+    # Translate a string
+    # @param [String] singular A string to translate
+    # @param [String] plural A plural form of string
+    # @param [Hash] opts An options hash (see below)
+    # @return [String] A translated string
+    # @opt [String] lang A language to translate on
+    # @opt [Fixnum] n A number of objects
     #
     # ==== Example
     # <tt>render _("%d file deleted", "%d files deleted", :n => del) % del</tt>

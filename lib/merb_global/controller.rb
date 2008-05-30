@@ -4,10 +4,12 @@ module Merb
   class Controller 
     include Merb::Global
     class_inheritable_accessor :_language
+    ##
     # Sets the language of block.
     # 
-    # The block should return language or nil if other method should be used
-    # to determine the language
+    # @yield The block is called each time. It should return the customized
+    #        language.
+    # @return [String, Nil] Returns the language or nil
     def self.language &block
       self._language = block
     end
