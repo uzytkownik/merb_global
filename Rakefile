@@ -5,7 +5,7 @@ require 'spec/rake/spectask'
 
 PLUGIN = "merb_global"
 NAME = "merb_global"
-GEM_VERSION = "0.0.1"
+GEM_VERSION = "0.0.2"
 AUTHORS = ["Alex Coles", "Maciej Piechotka"]
 EMAIL = "alex@alexcolesportfolio.com"
 HOMEPAGE = "http://trac.ikonoklastik.com/merb_global/"
@@ -21,14 +21,15 @@ spec = Gem::Specification.new do |s|
   s.email = EMAIL
   s.homepage = HOMEPAGE
   s.add_dependency('merb-core', '>= 0.9.1')
+  s.add_dependency('treetop', '>= 1.2.3') # Tested on 1.2.3
   s.require_path = 'lib'
   s.autorequire = PLUGIN
-  s.files = %w(LICENSE README Rakefile TODO) +
+  s.files = %w(LICENSE README Rakefile TODO HISTORY) +
             Dir.glob("{lib,specs,*_generators}/**/*")
 
   # rdoc
   s.has_rdoc = true
-  s.extra_rdoc_files = %w( README LICENSE TODO )
+  s.extra_rdoc_files = %w(README LICENSE TODO HISTORY)
 end
 
 windows = (PLATFORM =~ /win32|cygwin/) rescue nil
