@@ -8,13 +8,19 @@ require 'merb_global/plural'
 module Merb
   module Global
     module Providers
-      class ActiveRecord < Merb::Global::Provider #:nodoc: all
+      class ActiveRecord #:nodoc: all
+        include Merb::Global::Provider
+        
         def translate_to(singular, plural, opts)
           language = Language.find :first,
                                    :conditions => {:name => opts[:lang]}
           unless language.nil?
-            n = Plural.which_form opts[:n], language.plural
-            translation = Translation.find [language.id, singular.hash, n]
+            unless plural.nil?
+              n = Plural.which_form opts[:n], language.plural
+              translation = Translation.find [language.id, singular, n]
+            else
+              translation = Translation.find [language.id, singular, nil]
+            end  
             return translation.msgstr
           end rescue nil
           return opts[:n] > 1 ? plural : singular # Fallback if not in database
@@ -55,7 +61,7 @@ module Merb
 
         class Translation < ::ActiveRecord::Base
           set_table_name :merb_global_translations
-          set_primary_keys :language_id, :msgid_hash, :msgstr_index
+          set_primary_keys :language_id, :msgid, :msgstr_index
         end
       end
     end

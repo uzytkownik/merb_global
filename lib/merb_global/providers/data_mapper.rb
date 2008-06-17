@@ -6,14 +6,22 @@ module Merb
   module Global
     module Providers
       class DataMapper #:nodoc: all
+        include Merb::Global::Provider
+        
         def translate_to(singular, plural, opts)
           # I hope it's from MemCache
           language = Language.first :name => opts[:lang]
           unless language.nil?
-            n = Plural.which_form opts[:n], language.plural
-            translation = Translation.first :language_id => language.id,
-                                            :msgid_hash => singular.hash,
-                                            :msgstr_index => n
+            unless plural.nil?
+              n = Plural.which_form opts[:n], language.plural
+              translation = Translation.first :language_id => language.id,
+                                              :msgid => singular,
+                                              :msgstr_index => n
+            else
+              translation = Translation.first :language_id => language.id,
+                                              :msgid => singular,
+                                               :msgstr_index => nil
+            end
             return translation.msgstr unless translation.nil?
           end
           # Fallback if not in database
@@ -53,9 +61,9 @@ module Merb
           # - it may be wrong optimalisation
           # As far I'll leave it in this form. If anybody could measure the
           # speed of both methods it will be appreciate.
-          property :msgid_hash, Integer, :nullable => false, :key => true
+          property :msgid, Text, :nullable => false, :key => true
           property :msgstr, Text, :nullable => false, :lazy => false
-          property :msgstr_index, Integer, :nullable => false, :key => true
+          property :msgstr_index, Integer, :key => true
           #belongs_to :language
         end
       end
