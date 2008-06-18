@@ -10,6 +10,8 @@ module Merb
     module Providers
       class ActiveRecord #:nodoc: all
         include Merb::Global::Provider
+        include Merb::Global::Provider::Importer
+        include Merb::Global::Provider::Exporter
         
         def translate_to(singular, plural, opts)
           language = Language.find :first,
@@ -55,8 +57,49 @@ module Merb
           #                                       "(#{except.join(',')})"])
         end
 
+        def import(exporter, export_data)
+          Language.transaction do
+            Translation.transaction do
+              Language.find(:all).each do |language|
+                exporter.export_language export_data, language.name,
+                                         language.plural do |lang|
+                  language.translations.each do |translation|
+                    exporter.export_string lang, translation.msgid,
+                                                 translation.msgstr_index,
+                                                 translation.msgstr
+                  end
+                end
+              end
+            end
+          end
+        end
+
+        def export
+          Language.transaction do
+            Translation.transaction do
+              Language.delete_all
+              Translation.delete_all
+              yield nil
+            end
+          end
+        end
+
+        def export_language(export_data, language, plural)
+          yield Language.create!(:language => language, :plural => plural).id
+        end
+
+        def export_string(language_id, msgid, msgstr, msgstr_index)
+          Translation.create! :language_id => language_id,
+                              :msgid => msgid,
+                              :msgstr => msgstr,
+                              :msgstr_index => msgstr_index
+        end
+
         class Language < ::ActiveRecord::Base
           set_table_name :merb_global_languages
+          has_many :translations,
+            :class_name =>
+              "Merb::Global::Providers::ActiveRecord::Translations"
         end
 
         class Translation < ::ActiveRecord::Base

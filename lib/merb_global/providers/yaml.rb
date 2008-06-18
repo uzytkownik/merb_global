@@ -1,10 +1,13 @@
 require 'yaml'
+require 'ftools'
 
 module Merb
   module Global
     module Providers
       class Yaml #:nodoc:
         include Merb::Global::Provider
+        include Merb::Global::Provider::Importer
+        include Merb::Global::Provider::Exporter
         
         def initialize
           # Not synchronized - make GC do it's work (may be not optimal
@@ -47,7 +50,6 @@ module Merb
         end
 
         def create!
-          require 'ftools'
           File.mkdirs Merb::Global::Providers.localedir
         end
 
@@ -56,6 +58,49 @@ module Merb
           dir.collect! {|p| File.basename p, '.yaml'}
           dir.reject! {|lang| except.include? lang}
           dir.first
+        end
+
+        def import(exporter, export_data)
+          Dir[Merb::Global::Providers.localedir + '/*.yaml'].each do |file|
+            lang_name = File.basename p, '.yaml'
+            lang = YAML.file_load file
+            exporter.export_language export_data, lang_name,
+                                     lang[:plural] do |lang_data|
+              lang.each do |msgid, msgstr|
+                if msgid.is_a? String
+                  if msgstr.is_a? Hash
+                    msgstr.each do |msgstr_index, msgstr|
+                      export_string lang_data, msgid, msgstr_index, msgstr
+                    end
+                  else
+                    export_string lang_data, msgid, nil, msgstr
+                  end
+                end
+              end
+            end
+          end
+        end
+
+        def export
+          yield nil
+        end
+
+        def export_language(export_data, language, plural)
+          lang = {:plural => plural}
+          yield lang
+          file = "#{Merb::Global::Providers.localedir}/#{language}.yaml"
+          open file, 'w+' do |out|
+            YAML.dump lang, out
+          end 
+        end
+
+        def export_string(language, msgid, msgstr, msgstr_index)
+          if no.nil?
+            language[msgid] = msgstr
+          else
+            language[msgid] ||= {}
+            language[msgid][no] = msgstr
+          end
         end
       end
     end

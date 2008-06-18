@@ -6,6 +6,8 @@ module Merb
     module Providers
       class Sequel #:nodoc: all
         include Merb::Global::Provider
+        include Merb::Global::Provider::Importer
+        include Merb::Global::Provider::Exporter
 
         def translate_to(singular, plural, opts)
           language = Language[:name => opts[:lang]] # I hope it's from MemCache
@@ -38,10 +40,49 @@ module Merb
         end
 
         def choose(except)
-          Language.filter {:name != except}.first[:name]
+          Language.filter(~{:name => except}).first[:name]
+        end
+
+        def import(exporter, export_data)
+          DB.transaction do
+            Language.each do |language|
+              exporter.export_language export_data, language.name
+                                       language.plural do |lang|
+                language.translations.each do |translation|
+                  exporter.export_string lang, translation.msgid,
+                                         translation.msgstr_index,
+                                         translation.msgstr
+                end
+              end
+            end
+          end
+        end
+
+        def export
+          DB.transaction do
+            Language.delete_all
+            Translation.delete_all
+            yield nil
+          end
+        end
+
+        def export_language(export_data, language, plural)
+          lang = Language.create :name => language, :plural => plural
+          raise unless lang
+          yield lang
+        end
+
+        def export_string(language_id, msgid, msgstr, msgstr_index)
+          Translation.create(:language_id => language_id,
+                             :msgid => msgid,
+                             :msgstr => msgstr,
+                             :msgstr_index => msgstr_index) or raise
         end
 
         class Language < ::Sequel::Model(:merb_global_languages)
+          has_many :translations,
+                   :class => "Merb::Global::Providers::Sequel::Translation",
+                   :key => :language_id
         end
 
         class Translation < ::Sequel::Model(:merb_global_translations)
