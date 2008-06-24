@@ -1,5 +1,5 @@
 require 'yaml'
-require 'ftools'
+require 'fileutils'
 
 module Merb
   module Global
@@ -8,7 +8,7 @@ module Merb
         include Merb::Global::Provider
         include Merb::Global::Provider::Importer
         include Merb::Global::Provider::Exporter
-        
+
         def initialize
           # Not synchronized - make GC do it's work (may be not optimal
           # but I don't think that some problem will occure).
@@ -50,7 +50,7 @@ module Merb
         end
 
         def create!
-          File.mkdirs Merb::Global::Providers.localedir
+          FileUtils.mkdir_p Merb::Global::Providers.localedir
         end
 
         def choose(except)
@@ -62,18 +62,24 @@ module Merb
 
         def import(exporter, export_data)
           Dir[Merb::Global::Providers.localedir + '/*.yaml'].each do |file|
-            lang_name = File.basename p, '.yaml'
-            lang = YAML.file_load file
-            exporter.export_language export_data, lang_name,
+            lang_name = File.basename file, '.yaml'
+            lang = YAML.load_file file
+            exporter.export_language export_data,
+                                     lang_name,
+                                     lang[:nplural],
                                      lang[:plural] do |lang_data|
               lang.each do |msgid, msgstr|
                 if msgid.is_a? String
                   if msgstr.is_a? Hash
+                    msgid_plural = msgstr[:plural]
                     msgstr.each do |msgstr_index, msgstr|
-                      export_string lang_data, msgid, msgstr_index, msgstr
+                      if msgstr_index.is_a? Fixnum
+                        exporter.export_string lang_data, msgid, msgid_plural,
+                                                          msgstr_index, msgstr
+                      end
                     end
                   else
-                    export_string lang_data, msgid, nil, msgstr
+                    exporter.export_string lang_data, msgid, nil, nil, msgstr
                   end
                 end
               end
@@ -85,13 +91,13 @@ module Merb
           yield nil
         end
 
-        def export_language(export_data, language, plural)
-          lang = {:plural => plural}
+        def export_language(export_data, language, nplural, plural)
+          lang = {:nplural => nplural, :plural => plural}
           yield lang
           file = "#{Merb::Global::Providers.localedir}/#{language}.yaml"
           open file, 'w+' do |out|
             YAML.dump lang, out
-          end 
+          end
         end
 
         def export_string(language, msgid, msgstr, msgstr_index)

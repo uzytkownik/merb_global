@@ -12,7 +12,7 @@ module Merb
         include Merb::Global::Provider
         include Merb::Global::Provider::Importer
         include Merb::Global::Provider::Exporter
-        
+
         def translate_to(singular, plural, opts)
           language = Language.find :first,
                                    :conditions => {:name => opts[:lang]}
@@ -22,7 +22,7 @@ module Merb
               translation = Translation.find [language.id, singular, n]
             else
               translation = Translation.find [language.id, singular, nil]
-            end  
+            end
             return translation.msgstr
           end rescue nil
           return opts[:n] > 1 ? plural : singular # Fallback if not in database
@@ -62,9 +62,11 @@ module Merb
             Translation.transaction do
               Language.find(:all).each do |language|
                 exporter.export_language export_data, language.name,
+                                         language.nplural,
                                          language.plural do |lang|
                   language.translations.each do |translation|
                     exporter.export_string lang, translation.msgid,
+                                                 translation.msgid_plural,
                                                  translation.msgstr_index,
                                                  translation.msgstr
                   end
@@ -84,13 +86,16 @@ module Merb
           end
         end
 
-        def export_language(export_data, language, plural)
-          yield Language.create!(:language => language, :plural => plural).id
+        def export_language(export_data, language, nplural, plural)
+          yield Language.create!(:language => language, :nplural => nplural,
+                                 :plural => plural).id
         end
 
-        def export_string(language_id, msgid, msgstr, msgstr_index)
+        def export_string(language_id, msgid, msgid_plural,
+                                       msgstr, msgstr_index)
           Translation.create! :language_id => language_id,
                               :msgid => msgid,
+                              :msgid_plural => msgid_plural,
                               :msgstr => msgstr,
                               :msgstr_index => msgstr_index
         end
@@ -99,7 +104,7 @@ module Merb
           set_table_name :merb_global_languages
           has_many :translations,
             :class_name =>
-              "Merb::Global::Providers::ActiveRecord::Translations"
+              "::Merb::Global::Providers::ActiveRecord::Translation"
         end
 
         class Translation < ::ActiveRecord::Base

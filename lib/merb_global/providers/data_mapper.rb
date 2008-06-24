@@ -9,7 +9,7 @@ module Merb
         include Merb::Global::Provider
         include Merb::Global::Provider::Importer
         include Merb::Global::Provider::Exporter
-        
+
         def translate_to(singular, plural, opts)
           # I hope it's from MemCache
           language = Language.first :name => opts[:lang]
@@ -46,12 +46,14 @@ module Merb
         def import(exporter, export_data)
           ::DataMapper::Transaction.new(Language, Translation) do
             Language.all.each do |language|
-              exporter.export_language export_data, language.name
+              exporter.export_language export_data, language.name,
+                                       language.nplural,
                                        language.plural do |lang|
                 language.translations.each do |translation|
                   exporter.export_string lang, translation.msgid,
-                                         translation.msgstr_index,
-                                         translation.msgstr
+                                               translation.msgid_plural,
+                                               translation.msgstr_index,
+                                               translation.msgstr
                 end
               end
             end
@@ -66,16 +68,19 @@ module Merb
           end
         end
 
-        def export_language(export_data, language, plural)
-          lang = Language.new :language => language, :plural => plural
+        def export_language(export_data, language, nplural, plural)
+          lang = Language.new :language => language, :nplural => nplural,
+                              :plural => plural
           lang.save
           raise if lang.new_record?
           yield lang.id
         end
 
-        def export_string(language_id, msgid, msgstr, msgstr_index)
+        def export_string(language_id, msgid, msgid_plural,
+                                       msgstr, msgstr_index)
           trans = Translation.new :language_id => language_id,
                                   :msgid => msgid,
+                                  :msgid_plural => msgid_plural,
                                   :msgstr => msgstr,
                                   :msgstr_index => msgstr_index
           trans.save
@@ -88,6 +93,7 @@ module Merb
           storage_names[:default] = 'merb_global_languages'
           property :id, Integer, :serial => true
           property :name, String, :unique_index => true
+          property :nplural, Integer
           property :plural, Text, :lazy => false
           # validates_is_unique :name
           has n, :translations,
@@ -106,8 +112,9 @@ module Merb
           # As far I'll leave it in this form. If anybody could measure the
           # speed of both methods it will be appreciate.
           property :msgid, Text, :nullable => false, :key => true
+          property :msgid_plural, Text, :lazy => true
           property :msgstr, Text, :nullable => false, :lazy => false
-          property :msgstr_index, Integer, :key => true
+          property :msgstr_index, Integer, :nullable => true, :key => true
           belongs_to :language, :class_name =>  Language.name
         end
       end
