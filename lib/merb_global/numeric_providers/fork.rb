@@ -1,16 +1,17 @@
-require 'inline'
+require 'ffi'
 
 module Merb
   module Global
     module NumericProviders
       class Fork
         include Merb::Global::DateProviders::Base
+        include FFI::Library
 
         def localize(lang, number)
           pipe_rd, pipe_wr = IO.pipe
           pid = fork do
             pipe_rd.close
-            setlocale(lang.to_s)
+            setlocale(6, lang.to_s)
             pipe_wr.write(number)
             pipe_wr.flush
           end
@@ -19,15 +20,7 @@ module Merb
           pipe_rd.read
         end
 
-        inline do |builder|
-          builder.include '<locale.h>'
-          builder.c <<C
-void set_locale(const char *locale)
-{
-  setlocale(LC_ALL, locale);
-}
-C
-        end
+        attach_function 'setlocale', [:int, :string], :string
         private :set_locale
       end
     end
