@@ -1,7 +1,9 @@
 .DS_Store
 coverage
+data
 doc
 log
 pkg
 pkg/*
+tmp
 *.db
