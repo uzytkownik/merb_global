@@ -23,13 +23,17 @@ namespace :cldr do
     task :download => [:force_download]
   end
 
-  desc "Process CLDR"
-  task :process => [:download] do
+  desc "Forced processing of CLDR data"
+  task :force_process => [:download] do
     require 'rexml/document'
     require 'pstore'
     require 'fileutils'
     
+    if File.directory? "#{pwd}/data/cldr"
+      FileUtils.rm_r "#{pwd}/data/cldr"
+    end
     FileUtils.mkdir_p [pwd, 'data', 'data/cldr']
+
     Dir["#{pwd}/tmp/cldr-core/main/*.xml"].each do |file|
       puts "Processing #{file}"
       open(file) do |file|
@@ -59,11 +63,27 @@ namespace :cldr do
           end
         end
         
+        xml.elements.each('/*/alias') do |al|
+          source = REXML::Document.new(open("#{pwd}/tmp/cldr-core/main/#{al.attributes['source']}.xml"))
+          path = al.attributes['path'] || al.parent.xpath
+          source.elements.each('#{path}/*') do |e|
+            al.parent << e
+          end
+          al.parent.delete(al)
+        end
+
         cldr.transaction do
           
         end
       end
     end
+  end
+
+  desc "Processing of CLDR data"
+  task :process
+
+  unless File.directory? "#{pwd}/data/cldr"
+    task :process => [:force_process] 
   end
 end
 
