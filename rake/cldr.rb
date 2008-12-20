@@ -1,9 +1,9 @@
 CLDR_XML='tmp/cldr-core'
 CLDR_PSTORE='data/cldr'
 
-def parse_cldr(locale)
-  if File.file? "#{CLDR_PSTORE}/#{locale.gsub /_/, '-'}.pstore"
-    return PStore.new("#{CLDR_PSTORE}/#{locale.gsub /_/, '-'}.pstore")
+def parse_cldr(locale, cldr_hash)
+  if not cldr_hash[locale].nil?
+    return cldr_hash[locale]
   end
   
   puts "Parsing #{locale}"
@@ -18,40 +18,17 @@ def parse_cldr(locale)
   unless script.nil?
     script = script.attributes['type']
   end
-  
-  if terr.nil?
-    if script.nil?
-      cldr = PStore.new("#{CLDR_PSTORE}/#{lang}.pstore")
-      parent = nil
-    else
-      cldr = PStore.new("#{CLDR_PSTORE}/#{lang}-#{script}.pstore")
-      parent = nil
-    end
-  else
-    if script.nil?
-      cldr = PStore.new("#{CLDR_PSTORE}/#{lang}-#{terr}.pstore")
-      parent = parse_cldr(lang)
-    else
-      cldr = PStore.new("#{CLDR_PSTORE}/#{lang}-#{script}-#{terr}.pstore")
-      parent = parse_cldr("#{lang}_#{script}")
-    end
-  end
 
+  cldr = cldr_hash[locale] = {}
   
   if xml.elements['/ldml/alias/'].nil?
-    cldr.transaction do
-      cldr[:numeric] = {}
-      
-    end
+    cldr[:numeric] = {}
+    
   else
-    alias_element = xml.elements['/ldml/alias/']
-    alias_cldr = parse_cldr(alias_element.attributes['source'])
-    alias_cldr.transaction(true) do
-      cldr.transaction do
-        alias_cldr.roots.each do |root|
-          cldr[root] = alias_cldr[root]
-        end
-      end
+    alias_cldr = parse_cldr(xml.elements['/ldml/alias/'].attributes['source'],
+                            cldr_hash)
+    alias_cldr.each do |key, value|
+      cldr[key] = value
     end
   end
 
@@ -94,8 +71,17 @@ namespace :cldr do
     end
     FileUtils.mkdir_p CLDR_PSTORE
 
-    Dir["#{CLDR_XML}/main/*.xml"].each do |file|
-      parse_cldr(File.basename(file, '.xml'))
+    cldr_hash = {}
+    Dir["#{CLDR_XML}/main/*.xml"].collect! {|file| File.basename file, ".xml"}.
+                                  select {|locale| locale =~ /^..(_..)?$/}.
+                                  each do |locale|
+      parse_cldr(locale, cldr_hash)
+      cldr = PStore.new("#{CLDR_PSTORE}/#{locale}.pstore")
+      cldr.transaction do
+        cldr_hash[locale].each do |key, value|
+          cldr[key] = value
+        end
+      end
     end
   end
 
