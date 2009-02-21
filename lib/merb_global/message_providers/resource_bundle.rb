@@ -9,8 +9,12 @@ module Merb
         def localize(singular, plural, n, locale)
           b = bundle(locale)
           unless b.nil?
-            pn = Plural.which_form n, b.string('plural')
-            b.string("#{singular}.#{pn}")
+            unless plural.nil?
+              pn = Plural.which_form n, b.string('plural')
+              b.string("#{singular}.#{pn}")
+            else
+              b.string(singular)
+            end
           else
             n != 1 ? plural : singular
           end
