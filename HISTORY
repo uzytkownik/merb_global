@@ -1,3 +1,6 @@
+== 0.0.12
+ * supports HAML. adds :localize filter to haml
+
 === 0.0.7
  * More consistent configuration of supported languages
  * JRuby Numeric provider

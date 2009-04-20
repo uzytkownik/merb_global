@@ -37,4 +37,30 @@ module HamlParser
   end
 end
 
+module Haml
+  module Filters
+    module Localize
+      include Haml::Filters::Base
+      include Merb::Global
+      def render(text); text; end
+      def compile(precompiler, text)
+        resolve_lazy_requires
+        filter = self
+        precompiler.instance_eval do
+          if contains_interpolation?(text)
+            return if options[:suppress_eval]
+
+            push_script(<<RUBY, false)
+find_and_preserve(#{filter.inspect}.render_with_options(#{unescape_interpolation(text)}, _hamlout.options))
+RUBY
+            return
+          end
+
+          push_plain(text.strip)
+        end
+      end
+    end
+  end
+end
+
 GetText::RGetText.add_parser(HamlParser)

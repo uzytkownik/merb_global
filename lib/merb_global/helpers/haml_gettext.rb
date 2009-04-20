@@ -4,9 +4,6 @@ module Merb
       module HamlGettext
         # Inject _ gettext into plain text and tag plain text calls
         def push_plain(text)
-          if text =~ /JOIN THE/
-            Merb.logger.debug("push plain for #{text}")
-          end
           super(_(text.strip))
         end
         def parse_tag(line)
@@ -16,6 +13,18 @@ module Merb
           [tag_name, attributes, attributes_hash, object_ref, nuke_outer_whitespace,
               nuke_inner_whitespace, action, value]
         end
+      end
+    end
+  end
+end
+
+module Haml
+  module Filters
+    module Localize
+      include ::Haml::Filters::Base
+      extend Merb::Global
+      def render(text)
+        _(text.strip)
       end
     end
   end
