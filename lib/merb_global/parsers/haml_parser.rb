@@ -47,15 +47,6 @@ module Haml
         resolve_lazy_requires
         filter = self
         precompiler.instance_eval do
-          if contains_interpolation?(text)
-            return if options[:suppress_eval]
-
-            push_script(<<RUBY, false)
-find_and_preserve(#{filter.inspect}.render_with_options(#{unescape_interpolation(text)}, _hamlout.options))
-RUBY
-            return
-          end
-
           push_plain(text.strip)
         end
       end

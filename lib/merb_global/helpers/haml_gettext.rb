@@ -23,8 +23,12 @@ module Haml
     module Localize
       include ::Haml::Filters::Base
       extend Merb::Global
+      def compile(precompiler, text)
+        super(precompiler, _(text.strip).gsub('%{', '#{'))
+      end
+      
       def render(text)
-        _(text.strip)
+        text
       end
     end
   end
