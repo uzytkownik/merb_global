@@ -18,7 +18,7 @@ module Merb
 
         def localize(singular, plural, n, locale)
           context = locale._mg_gettext
-          context.set_locale locale.to_s, true
+          context.set_locale locale.to_s
           unless plural.nil?
             context.ngettext singular, plural, n
           else
@@ -26,23 +26,8 @@ module Merb
           end
         end
 
-        def support?(lang)
-          lang = lang.to_s
-          lang == 'en' ||
-            File.exist?(File.join(Merb::Global::MessageProviders.localedir, lang))
-        end
-
         def create!
           File.mkdirs Merb::Global::MessageProviders.localedir
-        end
-
-        def choose(except)
-          except = except.collect {|locale| locale.to_s}
-          dir = Dir[Merb::Global::MessageProviders.localedir + '/*/']
-          dir.collect! {|p| File.basename p}
-          dir << 'en'
-          dir.reject! {|lang| except.include? lang}
-          dir.first
         end
 
         def import
