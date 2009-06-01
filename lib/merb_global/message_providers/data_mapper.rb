@@ -105,7 +105,8 @@ module Merb
           property :msgid_plural, Text, :lazy => true
           property :msgstr, Text, :nullable => false, :lazy => false
           property :msgstr_index, Integer, :nullable => true, :key => true
-          belongs_to :language, :class_name =>  Language.name
+          belongs_to(:language, :class_name =>  Language.name,
+                     :child_key => [:language_id])
         end
       end
     end
