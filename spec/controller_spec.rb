@@ -7,6 +7,13 @@ class TestController < Merb::Controller
 end
 
 class FrTestController < Merb::Controller
+  locale {'fr'}
+  def index
+    "index"
+  end
+end
+
+class FrTestController2 < Merb::Controller
   language {'fr'}
   def index
     "index"
@@ -15,7 +22,7 @@ end
 
 class SettableTestController < Merb::Controller
   attr_accessor :current_lang
-  language {@current_lang}
+  locale {@current_lang}
   def index
     'index'
   end
@@ -66,13 +73,15 @@ describe Merb::Controller do
     Merb::Global::Locale.current.should == fr
   end
 
-  it "should have overriden settings by language block" do
+  it 'should have overriden settings by language/locale block' do
     en = Merb::Global::Locale.new('en')
     fr = Merb::Global::Locale.new('fr')
-    controller = dispatch_to(FrTestController, :index) do |controller|
-      controller.request.env['HTTP_ACCEPT_LANGUAGE'] = 'en'
+    [FrTestController, FrTestController2].each do |controller_class|
+      controller = dispatch_to(controller_class, :index) do |controller|
+        controller.request.env['HTTP_ACCEPT_LANGUAGE'] = 'en'
+      end
+      Merb::Global::Locale.current.should == fr
     end
-    Merb::Global::Locale.current.should == fr
   end
 
   it 'should evaluate in the object context' do

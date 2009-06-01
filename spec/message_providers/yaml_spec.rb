@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'merb_global/message_providers/yaml'
 
 class Merb::Global::MessageProviders::Yaml
-  attr_reader :lang
+  attr_accessor :lang
 end
 
 describe Merb::Global::MessageProviders::Yaml do
@@ -29,6 +29,32 @@ describe Merb::Global::MessageProviders::Yaml do
       pl = Merb::Global::Locale.new('pl')
       trans = @provider.localize('Hello', nil, 1, pl)
       trans.should == 'Cześć'
+    end
+
+    it 'should not cache in development enviroment' do
+      pl = Merb::Global::Locale.new('pl')
+      Merb.stubs(:environment => "development")
+      @provider.lang[pl] = {
+        :plural => "(n==1?0:n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?1:2)",
+        :nplural => 3,
+        "Hello" => "Wrong"
+      }
+      trans = @provider.localize('Hello', nil, 1, pl)
+      trans.should == 'Cześć' # Cache 'poisoning' should not work
+    end
+
+    it 'should cache in production enviroment' do
+      pl = Merb::Global::Locale.new('pl')
+      Merb.stubs(:environment => 'production')
+      old_lang = @provider.lang.dup
+      @provider.lang[pl] = {
+        :plural => "(n==1?0:n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?1:2)",
+        :nplural => 3,
+        'Hello' => 'Wrong'
+      }
+      trans = @provider.localize('Hello', nil, 1, pl)
+      trans.should == 'Wrong' # Cache 'poisoning' should  work
+      @provider.lang = old_lang
     end
   end
 

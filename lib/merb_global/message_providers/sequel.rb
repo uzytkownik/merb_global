@@ -58,8 +58,8 @@ module Merb
 
         def export(data)
           DB.transaction do
-            Language.delete_all
-            Translation.delete_all
+            Language.delete
+            Translation.delete
             data.each do |lang_name, lang|
               lang_obj = Language.create(:name => lang_name,
                                          :plural => lang[:plural],
@@ -85,13 +85,14 @@ module Merb
 
         class Language < ::Sequel::Model(:merb_global_languages)
           set_primary_key :id
-          has_many :translations,
-                   :class => "Merb::Global::MessageProviders::Sequel::Translation",
-                   :key => :language_id
+          one_to_many :translations,
+                      :class => "Merb::Global::MessageProviders::Sequel::Translation",
+                      :key => :language_id
         end
 
         class Translation < ::Sequel::Model(:merb_global_translations)
           set_primary_key :language_id, :msgid, :msgstr_index
+          unrestrict_primary_key
         end
       end
     end

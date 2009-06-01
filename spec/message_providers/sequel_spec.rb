@@ -2,7 +2,7 @@ require 'spec_helper'
 
 if HAS_SEQUEL
 
-  DB = Sequel.open 'sqlite:///'
+  DB = Sequel.sqlite
 
   require 'merb_global/message_providers/sequel'
   load    Pathname(__FILE__).dirname.parent.parent.expand_path +
@@ -37,6 +37,10 @@ if HAS_SEQUEL
       migration =
         Merb::Global::MessageProviders::Sequel::AddTranslationsMigration
       migration.new(DB).up
+      lang = Merb::Global::MessageProviders::Sequel::Language
+      trans = Merb::Global::MessageProviders::Sequel::Translation
+      lang.set_dataset lang.dataset
+      trans.set_dataset trans.dataset
     end
 
     after do
