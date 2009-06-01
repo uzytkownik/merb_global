@@ -1,5 +1,6 @@
 #<% if false %>
 # This is quick hack to avoid naming confict in specs
+require 'sequel/extensions/migration'
 class Merb::Global::MessageProviders::Sequel
 #<% end %>
 class AddTranslationsMigration < Sequel::Migration
